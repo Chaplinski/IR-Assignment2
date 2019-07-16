@@ -2,6 +2,8 @@ import re
 import os
 import collections
 import time
+import math
+import sys
 #import other modules as needed
 
 class Index:
@@ -20,6 +22,7 @@ class Index:
         # text_files = ['Text-001.txt', 'Text-002.txt']
         text_dictionary = {}
         text_id = 1
+        total_number_of_documents = len(text_files)
 
         for text_file in text_files:
             # concatenate path with file name
@@ -32,14 +35,14 @@ class Index:
             text_contents = self.convert_string_to_list(text_contents)
 
             # build dictionary
-            text_dictionary = self.build_dictionary(text_id, text_contents, text_dictionary)
+            text_dictionary = self.build_dictionary(text_id, text_contents, text_dictionary, total_number_of_documents)
 
             text_id += 1
 
         # end timer
         end = time.clock()
         total_time = end - start
-        return text_dictionary, total_time
+        return text_dictionary  #, total_time
 
     # def exact_query(self, query_terms, k):
 	# #function for exact top K retrieval (method 1)
@@ -89,7 +92,7 @@ class Index:
 
         return contents
 
-    def build_dictionary(self, text_id, word_list, text_dictionary):
+    def build_dictionary(self, text_id, word_list, text_dictionary, total_number_of_documents):
 
         this_dict = text_dictionary
         text = text_id
@@ -97,17 +100,22 @@ class Index:
         integer = 0
         # for every word in a text
         for potential_new_word in word_list:
+            # print(potential_new_word)
             # check if the word already exists in the dictionary
             if potential_new_word in this_dict:
                 # if word does exist then access its value array
                 for key, value in this_dict.items():
                     # if the new word being added is the same as a key value
                     if key == potential_new_word:
+                        value.pop(0)
                         # temp list holds values of all texts that already have int values saved
                         already_saved_texts = []
                         for list in value:
+                            # print(list)
+
                             # append text name to already_saved_texts list
                             already_saved_texts.append(list[0])
+                        # sys.exit()
                         # set Boolean to false as a default
                         is_already_saved = False
                         # iterate though already_saved_texts looking for current text
@@ -130,12 +138,20 @@ class Index:
                             # append text and word int location to list
                             value.append([text, [integer]])
 
+                        # calculate the number of documents that hold this word
+                        number_of_docs_word_appears = len(value)
+                        IDF = math.log(number_of_documents / number_of_docs_word_appears)
+                        value.insert(0, IDF)
+
             else:
                 # if word does not already exist in dictionary
                 # create new list containing text ID and int position in text to become value of new key
                 new_list = [text, [integer]]
+
+                IDF = math.log(total_number_of_documents/1)
+
                 # update dictionary to hold new key/value
-                this_dict.update({potential_new_word: [new_list]})
+                this_dict.update({potential_new_word: [IDF, new_list]})
 
             integer += 1
 
@@ -172,7 +188,7 @@ class Index:
         return doc_dict
 
 
-index = Index('collection3/')
+index = Index('collection2/')
 final_index = index.buildIndex()
 print(final_index)
 # print('Index built in', final_index[1], 'seconds')
