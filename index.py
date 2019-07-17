@@ -35,10 +35,12 @@ class Index:
             text_contents = self.convert_string_to_list(text_contents)
 
             # build dictionary
-            text_dictionary = self.build_dictionary(text_id, text_contents, text_dictionary, total_number_of_documents)
+            text_dictionary = self.build_dictionary(text_id, text_contents, text_dictionary)
 
             text_id += 1
 
+        # calculate the idf of each term
+        self.calculate_idf(text_dictionary, total_number_of_documents)
         # end timer
         end = time.clock()
         total_time = end - start
@@ -92,36 +94,31 @@ class Index:
 
         return contents
 
-    def build_dictionary(self, text_id, word_list, text_dictionary, total_number_of_documents):
+    def build_dictionary(self, text_id, word_list, text_dictionary):
 
         this_dict = text_dictionary
-        text = text_id
+        total_words_in_document = len(word_list)
 
         integer = 0
         # for every word in a text
         for potential_new_word in word_list:
-            # print(potential_new_word)
             # check if the word already exists in the dictionary
             if potential_new_word in this_dict:
                 # if word does exist then access its value array
                 for key, value in this_dict.items():
                     # if the new word being added is the same as a key value
                     if key == potential_new_word:
-                        value.pop(0)
                         # temp list holds values of all texts that already have int values saved
                         already_saved_texts = []
                         for list in value:
-                            # print(list)
-
                             # append text name to already_saved_texts list
                             already_saved_texts.append(list[0])
-                        # sys.exit()
                         # set Boolean to false as a default
                         is_already_saved = False
                         # iterate though already_saved_texts looking for current text
                         for text_val in already_saved_texts:
                             # if current text exists set Boolean to true
-                            if text_val == text:
+                            if text_val == text_id:
                                 is_already_saved = True
 
                         # if text already has values saved
@@ -129,31 +126,52 @@ class Index:
                             # iterate through lists
                             for list in value:
                                 # position 0 in a list refers to the definition of what text it refers to
-                                if list[0] == text:
+                                if list[0] == text_id:
                                     # if first value in key list is a text that already has this term then append
                                     # word int location to list
                                     list[1].append(integer)
                         # if list does not already have values saved
                         else:
                             # append text and word int location to list
-                            value.append([text, [integer]])
-
-                        # calculate the number of documents that hold this word
-                        number_of_docs_word_appears = len(value)
-                        IDF = math.log(number_of_documents / number_of_docs_word_appears)
-                        value.insert(0, IDF)
+                            value.append([text_id, [integer]])
 
             else:
                 # if word does not already exist in dictionary
                 # create new list containing text ID and int position in text to become value of new key
-                new_list = [text, [integer]]
-
-                IDF = math.log(total_number_of_documents/1)
-
+                new_list = [text_id, [integer]]
                 # update dictionary to hold new key/value
-                this_dict.update({potential_new_word: [IDF, new_list]})
+                this_dict.update({potential_new_word: [new_list]})
 
             integer += 1
+
+        this_dict = self.calculate_tf(this_dict, total_words_in_document, text_id)
+
+        return this_dict
+
+    def calculate_tf(self, this_dict, total_words_in_document, text_id):
+        # for each dictionary term
+        for key, value in this_dict.items():
+            # for each document per term in dictionary
+            for item in value:
+                # if text_id is equal to the text_id of the list item
+                if item[0] == text_id:
+                    # measure the number of times a word appears in a doc
+                    number_of_appearances_in_doc = len(item[1])
+                    # divide it by the word count of the entire document
+                    tf = number_of_appearances_in_doc/total_words_in_document
+                    # insert into list
+                    item.insert(1, tf)
+
+        return this_dict
+
+    def calculate_idf(self, this_dict, total_number_of_documents):
+
+        # for each term in dictionary calculate and add the IDF
+        for key, value in this_dict.items():
+            # calculate IDF
+            idf = math.log(total_number_of_documents/len(value))
+            # add IDF to list in the first position
+            value.insert(0, idf)
 
         return this_dict
 
@@ -188,7 +206,7 @@ class Index:
         return doc_dict
 
 
-index = Index('collection2/')
+index = Index('collection3/')
 final_index = index.buildIndex()
 print(final_index)
 # print('Index built in', final_index[1], 'seconds')
