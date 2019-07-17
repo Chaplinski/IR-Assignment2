@@ -159,8 +159,13 @@ class Index:
                     number_of_appearances_in_doc = len(item[1])
                     # divide it by the word count of the entire document
                     tf = number_of_appearances_in_doc/total_words_in_document
+                    # print(tf)
+                    # calculate w
+                    w = (1 + math.log10(tf))
+                    # print(w)
+                    # sys.exit()
                     # insert into list
-                    item.insert(1, tf)
+                    item.insert(1, w)
 
         return this_dict
 
@@ -169,7 +174,7 @@ class Index:
         # for each term in dictionary calculate and add the IDF
         for key, value in this_dict.items():
             # calculate IDF
-            idf = math.log(total_number_of_documents/len(value))
+            idf = math.log10(total_number_of_documents/len(value))
             # add IDF to list in the first position
             value.insert(0, idf)
 
