@@ -56,10 +56,11 @@ class Index:
     def exact_query(self, query_terms, k):
 	# #function for exact top K retrieval (method 1)
 	# #Returns at the minimum the document names of the top K documents ordered in decreasing order of similarity score
-        print('query: ', query_terms)
-        print('top k: ', k)
-        print('index: ', self.index)
+    #     print('query: ', query_terms)
+    #     print('top k: ', k)
+    #     print('index: ', self.index)
 
+        # build the dictionaries containing query terms and index terms and their ids and tf-idf
         query_tf_idf_dict = {}
         index_tf_idf_dict = {}
         # for each word in the query
@@ -74,21 +75,66 @@ class Index:
                 if word in self.index:
                     # get idf from the dictionary
                     dictionary_idf = self.index[word][0]
-                    print(word, 'is in the index and its idf value is:', dictionary_idf)
-
+                    # print(word, 'is in the index and its idf value is:', dictionary_idf)
                     for doc_id_list in self.index[word]:
                         # skip the first list item since it is the idf
                         if doc_id_list != self.index[word][0]:
-
+                            # get doc id
                             doc_id = doc_id_list[0]
+                            # get word tf
                             word_tf = doc_id_list[1]
+                            # get tf-idf of word appearing in this document
                             doc_word_tf_idf = word_tf * dictionary_idf
-                            if index_tf_idf_dict[doc_id] in index_tf_idf_dict:
+                            if doc_id in index_tf_idf_dict:
+                                # if doc id already exists in index_tf_idf_dict then add to the dictionary that
+                                # is its value
+                                index_tf_idf_dict[doc_id][word] = doc_word_tf_idf
+                                # print('doc id is:', doc_id, 'and tf-idf is:', doc_word_tf_idf)
+                            else:
+                                # if doc id does not exist in index_tf_idf_dict then add doc id and dictionary
+                                # as value. Also add current word and its tf-idf
                                 index_tf_idf_dict[doc_id] = {}
                                 index_tf_idf_dict[doc_id][word] = doc_word_tf_idf
-                                print('doc id is:', doc_id, 'and tf-idf is:', doc_word_tf_idf)
+                                # print('doc id is:', doc_id, 'and tf-idf is:', doc_word_tf_idf)
                                 # sys.exit()
-        print(index_tf_idf_dict)
+
+        # print('Query tf-idf:', query_tf_idf_dict)
+        # print('Index tf-idf', index_tf_idf_dict)
+
+        # for each text id held in index_tf_idf_dict
+        for index_key, index_dictionary in index_tf_idf_dict.items():
+            numerator = 0
+            denominator_index = 0
+            denominator_query = 0
+            # print('index dictionary: ', index_dictionary)
+            # loop through query terms
+            for query_key, query_value in query_tf_idf_dict.items():
+                # if the query key exists in the index_dictionary
+                if query_key in index_dictionary:
+                    index_tf_idf = index_dictionary[query_key]
+                    query_tf_idf = query_value
+                    add_to_numerator = index_tf_idf * query_tf_idf
+                    numerator += add_to_numerator
+
+                    denominator_index += index_tf_idf * index_tf_idf
+                    denominator_query += query_tf_idf * query_tf_idf
+                    # print('index tf-idf:', index_tf_idf)
+                    # print('query tf-idf: ', query_tf_idf)
+                    # print('Number added:', add_to_numerator)
+
+                    # sys.exit()
+
+            # for word, tf_idf in query_tf_idf_dict.items():
+            denominator_index_root = math.sqrt(denominator_index)
+            denominator_query_root = math.sqrt(denominator_query)
+            denominator = denominator_index_root * denominator_query_root
+            vector = numerator/denominator
+            print('Document', index_key, 'Numerator:', numerator)
+            print('Document', index_key, 'Index denominator:', denominator_index_root)
+            print('Document', index_key, 'Query denominator:', denominator_query_root)
+            print('Document', index_key, 'Denominator:', denominator)
+            print('Document', index_key, 'Vector:', vector)
+
 
 
 	# def inexact_query_champion(self, query_terms, k):
