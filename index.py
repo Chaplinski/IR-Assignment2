@@ -112,16 +112,18 @@ class Index:
                 # if the query key exists in the index_dictionary
                 if query_key in index_dictionary:
                     index_tf_idf = index_dictionary[query_key]
-                    query_tf_idf = query_value
-                    add_to_numerator = index_tf_idf * query_tf_idf
-                    numerator += add_to_numerator
+                else:
+                    index_tf_idf = 0
+                query_tf_idf = query_value
+                add_to_numerator = index_tf_idf * query_tf_idf
+                numerator += add_to_numerator
 
-                    denominator_index += index_tf_idf * index_tf_idf
-                    denominator_query += query_tf_idf * query_tf_idf
+                denominator_index += index_tf_idf * index_tf_idf
+                denominator_query += query_tf_idf * query_tf_idf
                     # print('index tf-idf:', index_tf_idf)
                     # print('query tf-idf: ', query_tf_idf)
                     # print('Number added:', add_to_numerator)
-
+# TODO Why is vector so high for document 1?
                     # sys.exit()
 
             # for word, tf_idf in query_tf_idf_dict.items():
